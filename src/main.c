@@ -38,11 +38,11 @@ static const struct bt_data ad[] = {
 
 };
 
-static const struct bt_data sd[] = {
-	/* STEP 3.2.2 - Include the 16-bytes (128-Bits) UUID of the LBS service in the scan response packet */
-	BT_DATA_BYTES(BT_DATA_UUID128_ALL,
-		      BT_UUID_128_ENCODE(0x00001523, 0x1212, 0xefde, 0x1523, 0x785feabcd123)),
-};
+// static const struct bt_data sd[] = {
+// 	/* STEP 3.2.2 - Include the 16-bytes (128-Bits) UUID of the LBS service in the scan response packet */
+// 	BT_DATA_BYTES(BT_DATA_UUID128_ALL,
+// 		      BT_UUID_128_ENCODE(0x00001523, 0x1212, 0xefde, 0x1523, 0x785feabcd123)),
+// };
 
 int main(void)
 {
@@ -59,34 +59,34 @@ int main(void)
 
 	/* STEP 4.2 - Change the random static address */
 	bt_addr_le_t addr;
-	// err = bt_addr_le_from_str("FF:EE:DD:CC:BB:AA", "random", &addr);
+	err = bt_addr_le_from_str("FF:EE:DD:CC:BB:AA", "random", &addr);
 
-	err = bt_addr_le_from_str("01:02:AF:05:01:02", "random", &addr);
+	// err = bt_addr_le_from_str("01:02:AF:05:01:02", "random", &addr);
 
-	if (err) {
-		printk("Invalid BT address (err %d)\n", err);
-	}
+	// if (err) {
+	// 	printk("Invalid BT address (err %d)\n", err);
+	// }
 
 	err = bt_id_create(&addr, NULL);
-	if (err < 0) {
-		printk("Creating new ID failed (err %d)\n", err);
-	}
+	// if (err < 0) {
+	// 	printk("Creating new ID failed (err %d)\n", err);
+	// }
 
 	err = bt_enable(NULL);
-	if (err) {
-		LOG_ERR("Bluetooth init failed (err %d)\n", err);
-		return -1;
-	}
+	// if (err) {
+	// 	LOG_ERR("Bluetooth init failed (err %d)\n", err);
+	// 	return -1;
+	// }
 
-	LOG_INF("Bluetooth initialized\n");
+	// LOG_INF("Bluetooth initialized\n");
 	/* STEP 5.2 - Start advertising */
-	err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
-	if (err) {
-		LOG_ERR("Advertising failed to start (err %d)\n", err);
-		return -1;
-	}
+	err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad), NULL, 0);
+	// if (err) {
+	// 	LOG_ERR("Advertising failed to start (err %d)\n", err);
+	// 	return -1;
+	// }
 
-	LOG_INF("Advertising successfully started\n");
+	// LOG_INF("Advertising successfully started\n");
 
 	for (;;) {
 		dk_set_led(RUN_STATUS_LED, (++blink_status) % 2);
