@@ -1,21 +1,20 @@
-/*
- * Copyright (c) 2023 Nordic Semiconductor ASA
- *
- * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
- */
+#include <zephyr/types.h>
+#include <stddef.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/util.h>
+#include <zephyr/bluetooth/bluetooth.h>
+#include <zephyr/bluetooth/hci.h>
+#include <zephyr/bluetooth/addr.h>  // Required for address utilities
 
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/bluetooth/bluetooth.h>
+
 #include <zephyr/bluetooth/gap.h>
 /* STEP 3.2.1 - Include the header file of the UUID helper macros and definitions */
 #include <zephyr/bluetooth/uuid.h>
-/* STEP 4.1 - Include the header file for managing Bluetooth LE addresses */
-#include <zephyr/bluetooth/addr.h>
 
 #include <dk_buttons_and_leds.h>
 
-/* STEP 5.1 - Create the advertising parameter for connectable advertising */
 static const struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
 	(BT_LE_ADV_OPT_CONNECTABLE |
 	 BT_LE_ADV_OPT_USE_IDENTITY), /* Connectable advertising and use identity address */
@@ -23,7 +22,6 @@ static const struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
 	801, /* Max Advertising Interval 500.625ms (801*0.625ms) */
 	NULL); /* Set to NULL for undirected advertising */
 
-LOG_MODULE_REGISTER(Lesson2_Exercise3, LOG_LEVEL_INF);
 
 #define DEVICE_NAME CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
@@ -31,65 +29,104 @@ LOG_MODULE_REGISTER(Lesson2_Exercise3, LOG_LEVEL_INF);
 #define RUN_STATUS_LED DK_LED1
 #define RUN_LED_BLINK_INTERVAL 1000
 
+static uint8_t mfg_data[] = { 0xff, 0xff, 0x00 };
+
 static const struct bt_data ad[] = {
 	/* STEP 3.1 - Set the flags and populate the device name in the advertising packet */
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
+	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),  // Existing manufacturer data
 
 };
 
-// static const struct bt_data sd[] = {
-// 	/* STEP 3.2.2 - Include the 16-bytes (128-Bits) UUID of the LBS service in the scan response packet */
-// 	BT_DATA_BYTES(BT_DATA_UUID128_ALL,
-// 		      BT_UUID_128_ENCODE(0x00001523, 0x1212, 0xefde, 0x1523, 0x785feabcd123)),
+
+
+
+// // Device name to advertise
+// static const char device_name[] = "MyBLEDevice";
+
+// // static const struct bt_data ad[] = {
+// // 	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),
+// // };
+
+// static const struct bt_data ad[] = {
+//     BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),  // Existing manufacturer data
+//     BT_DATA(BT_DATA_NAME_COMPLETE, device_name, sizeof(device_name) - 1),  // Add device name
 // };
+
+static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
+		    struct net_buf_simple *buf)
+{
+	char addr_str[BT_ADDR_LE_STR_LEN];  // Buffer for address string
+
+	// Convert BLE address to string and print
+	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
+	printk("Scanned Device: Address=%s, RSSI=%d, Type=%u\n",
+	       addr_str, rssi, adv_type);
+
+	mfg_data[2]++;
+}
 
 int main(void)
 {
-	int blink_status = 0;
+	struct bt_le_scan_param scan_param = {
+		.type       = BT_HCI_LE_SCAN_PASSIVE,
+		.options    = BT_LE_SCAN_OPT_NONE,
+		.interval   = 0x0010,
+		.window     = 0x0010,
+	};
 	int err;
 
-	LOG_INF("Starting Lesson 2 - Exercise 3 \n");
+	printk("Starting Scanner/Advertiser Demo\n");
 
-	err = dk_leds_init();
-	if (err) {
-		LOG_ERR("LEDs init failed (err %d)\n", err);
-		return -1;
-	}
 
-	/* STEP 4.2 - Change the random static address */
 	bt_addr_le_t addr;
 	err = bt_addr_le_from_str("FF:EE:DD:CC:BB:AA", "random", &addr);
-
-	// err = bt_addr_le_from_str("01:02:AF:05:01:02", "random", &addr);
-
-	// if (err) {
-	// 	printk("Invalid BT address (err %d)\n", err);
-	// }
-
 	err = bt_id_create(&addr, NULL);
-	// if (err < 0) {
-	// 	printk("Creating new ID failed (err %d)\n", err);
-	// }
+
 
 	err = bt_enable(NULL);
+
 	// if (err) {
-	// 	LOG_ERR("Bluetooth init failed (err %d)\n", err);
-	// 	return -1;
+	// 	printk("Bluetooth init failed (err %d)\n", err);
+	// 	return 0;
 	// }
 
-	// LOG_INF("Bluetooth initialized\n");
-	/* STEP 5.2 - Start advertising */
-	err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad), NULL, 0);
+	// printk("Bluetooth initialized\n");
+
+	// err = bt_le_scan_start(&scan_param, scan_cb);
 	// if (err) {
-	// 	LOG_ERR("Advertising failed to start (err %d)\n", err);
-	// 	return -1;
+	// 	printk("Starting scanning failed (err %d)\n", err);
+	// 	return 0;
 	// }
 
-	// LOG_INF("Advertising successfully started\n");
+	do {
 
-	for (;;) {
-		dk_set_led(RUN_STATUS_LED, (++blink_status) % 2);
-		k_sleep(K_MSEC(RUN_LED_BLINK_INTERVAL));
-	}
+		k_sleep(K_MSEC(400));
+
+		err = bt_le_adv_start(adv_param, ad, ARRAY_SIZE(ad),
+				      NULL, 0);
+
+		k_sleep(K_MSEC(40));
+
+		err = bt_le_adv_stop();
+
+		k_sleep(K_MSEC(400));
+
+
+
+		k_sleep(K_MSEC(400));
+
+		err = bt_le_scan_start(&scan_param, scan_cb);
+
+
+		k_sleep(K_MSEC(40));
+
+		err = bt_le_scan_stop();
+
+		k_sleep(K_MSEC(400));
+
+
+	} while (1);
+	return 0;
 }

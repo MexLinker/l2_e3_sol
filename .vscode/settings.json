@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "hci.h": "c",
+        "kernel.h": "c"
+    }
+}
