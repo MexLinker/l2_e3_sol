@@ -41,19 +41,6 @@ static const struct bt_data ad[] = {
 
 
 
-
-// // Device name to advertise
-// static const char device_name[] = "MyBLEDevice";
-
-// // static const struct bt_data ad[] = {
-// // 	BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),
-// // };
-
-// static const struct bt_data ad[] = {
-//     BT_DATA(BT_DATA_MANUFACTURER_DATA, mfg_data, 3),  // Existing manufacturer data
-//     BT_DATA(BT_DATA_NAME_COMPLETE, device_name, sizeof(device_name) - 1),  // Add device name
-// };
-
 static void scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t adv_type,
 		    struct net_buf_simple *buf)
 {
@@ -83,24 +70,10 @@ int main(void)
 	bt_addr_le_t addr;
 	err = bt_addr_le_from_str("FF:EE:DD:CC:BB:AA", "random", &addr);
 	err = bt_id_create(&addr, NULL);
-
-
 	err = bt_enable(NULL);
 
-	// if (err) {
-	// 	printk("Bluetooth init failed (err %d)\n", err);
-	// 	return 0;
-	// }
-
-	// printk("Bluetooth initialized\n");
-
-	// err = bt_le_scan_start(&scan_param, scan_cb);
-	// if (err) {
-	// 	printk("Starting scanning failed (err %d)\n", err);
-	// 	return 0;
-	// }
-
 	do {
+
 
 		k_sleep(K_MSEC(400));
 
@@ -125,7 +98,6 @@ int main(void)
 		err = bt_le_scan_stop();
 
 		k_sleep(K_MSEC(400));
-
 
 	} while (1);
 	return 0;
