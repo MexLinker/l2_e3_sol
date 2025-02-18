@@ -206,6 +206,9 @@ int main(void)
 
 		k_sleep(K_MSEC(1000));
 
+
+		//edit from dom at Feb18 before TA
+
 	} while (1);
 	return 0;
 }
